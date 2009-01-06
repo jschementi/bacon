@@ -28,7 +28,7 @@ module Bacon
       if $!
         raise $!
       elsif Counter[:errors] + Counter[:failed] > 0
-        exit 1
+        exit 1 unless SILVERLIGHT
       end
     }
     Counter[:installed_summary] += 1
@@ -185,12 +185,15 @@ module Bacon
               raise e  unless rescued
             end
           end
-        rescue Object => e
+        rescue => e
           ErrorLog << "#{e.class}: #{e.message}\n"
-          e.backtrace.find_all { |line| line !~ /bin\/bacon|\/bacon\.rb:\d+/ }.
-            each_with_index { |line, i|
-            ErrorLog << "\t#{line}#{i==0 ? ": #@name - #{description}" : ""}\n"
-          }
+          if e.backtrace
+            e.backtrace.find_all do |line| 
+              line !~ /bin\/bacon|\/bacon\.rb:\d+/ 
+            end.each_with_index do |line, i|
+              ErrorLog << "\t#{line}#{i==0 ? ": #@name - #{description}" : ""}\n"
+            end
+          end
           ErrorLog << "\n"
 
           if e.kind_of? Error
